@@ -21,4 +21,19 @@ class ChatRepositoryImpl implements ChatRepository {
     await _local.cacheMessages(topicId, remote);
     return remote;
   }
+
+  @override
+  Stream<List<ChatMessage>> watchMessages(String topicId) {
+    return _local.watchMessages(topicId);
+  }
+
+  @override
+  Future<void> saveMessage(String topicId, ChatMessage message) async {
+    // 先拿到当前缓存列表
+    final existing = await _local.getCachedMessages(topicId) ?? [];
+    // 新建列表并加入新消息
+    final updated = List<ChatMessage>.from(existing)..add(message);
+    // 写入并通知流更新
+    await _local.cacheMessages(topicId, updated);
+  }
 }
