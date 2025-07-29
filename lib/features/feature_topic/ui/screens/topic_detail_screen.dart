@@ -63,10 +63,18 @@ class _TopicDetailScreenState extends ConsumerState<TopicDetailScreen> {
         children: [
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 4),
-            child: TextButton.icon(
-              icon: const Icon(Icons.add),
-              label: const Text('新主题'),
-              onPressed: () {},
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                const Text('使用远程API'),
+                Switch(
+                  value: ref.watch(useRemoteApiProvider),
+                  onChanged: (value) {
+                    ref.read(useRemoteApiProvider.notifier).state = value;
+                  },
+                ),
+                const Text('使用本地API'),
+              ],
             ),
           ),
           Expanded(

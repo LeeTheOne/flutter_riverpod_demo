@@ -4,7 +4,7 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../domain/models/chat_message.dart';
-import 'providers_setup.dart'; // 导出 chatHistoryUseCaseProvider & chatRepositoryProvider & translateUserMsgUsecaseProvider
+import 'providers_setup.dart'; // 导出 chatHistoryUseCaseProvider & chatRepositoryProvider & translateUserMsgUsecaseProvider & useRemoteApiProvider & localTranslateServiceProvider & remoteTranslateServiceProvider
 
 /// 按 topicId 区分不同会话的 Provider
 final chatProvider = StateNotifierProvider.family<
