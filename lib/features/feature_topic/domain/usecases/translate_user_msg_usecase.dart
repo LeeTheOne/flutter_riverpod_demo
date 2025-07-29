@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/chat_message.dart';
-import '../services/local_translate_service.dart';
-import '../services/remote_translate_service.dart';
+import '../../data_source/local_translate_service.dart';
+import '../../data_source/remote_translate_service.dart';
 import '../../repo/chat_repository.dart';
 import '../../ui/providers/providers_setup.dart';
 
