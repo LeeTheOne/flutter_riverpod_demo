@@ -1,51 +1,45 @@
+// lib/features/feature_topic/ui/providers/chat_provider.dart
+
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../../domain/models/chat_message.dart';
-import '../../domain/usecases/chat_history_usecase.dart';
-import '../../repo/chat_repository.dart';
-import 'providers_setup.dart';
+import 'providers_setup.dart'; // 导出 chatHistoryUseCaseProvider & chatRepositoryProvider
 
-
-/// Topic 对应的消息列表 Provider
-final chatProvider = StateNotifierProvider
-    .family<ChatNotifier, List<ChatMessage>, String>(
-  (ref, topicId) {
-    final historyUseCase = ref.watch(chatHistoryUseCaseProvider);
-    final repository = ref.watch(chatRepositoryProvider);
-    return ChatNotifier(
-      topicId: topicId,
-      historyUseCase: historyUseCase,
-      repository: repository,
-    );
-  },
-);
+/// 按 topicId 区分不同会话的 Provider
+final chatProvider = StateNotifierProvider.family<
+    ChatNotifier,
+    List<ChatMessage>,
+    String>((ref, topicId) {
+  // 只传入 ref 和 topicId
+  return ChatNotifier(ref, topicId);
+});
 
 class ChatNotifier extends StateNotifier<List<ChatMessage>> {
+  final Ref _ref;
   final String topicId;
-  final ChatHistoryUseCase _historyUseCase;
-  final ChatRepository _repository;
   late final StreamSubscription<List<ChatMessage>> _sub;
 
-  ChatNotifier({
-    required this.topicId,
-    required ChatHistoryUseCase historyUseCase,
-    required ChatRepository repository,
-  })  : _historyUseCase = historyUseCase,
-        _repository = repository,
-        super([]) {
-    // 先加载历史消息并写入本地，触发流更新
+  ChatNotifier(this._ref, this.topicId) : super([]) {
+    // 拉历史并缓存到本地
     _loadHistory();
-    // 再订阅本地消息流
-    _sub = _repository.watchMessages(topicId).listen((messages) {
+    // 订阅本地消息流，自动更新 UI
+    _sub = _ref
+        .read(chatRepositoryProvider)
+        .watchMessages(topicId)
+        .listen((messages) {
       state = messages;
     });
   }
 
-  /// 加载历史消息（如从服务器），并缓存到本地
   Future<void> _loadHistory() async {
-    final history = await _historyUseCase.execute(topicId);
+    // 随用随取历史用例
+    final history =
+        await _ref.read(chatHistoryUseCaseProvider).execute(topicId);
+    // 缓存到本地，触发 watchMessages 流更新
+    final repo = _ref.read(chatRepositoryProvider);
     for (final msg in history) {
-      await _repository.saveMessage(topicId, msg);
+      await repo.saveMessage(topicId, msg);
     }
   }
 
@@ -63,7 +57,14 @@ class ChatNotifier extends StateNotifier<List<ChatMessage>> {
       time: DateTime.now(),
       sender: Sender.user,
     );
-    await _repository.saveMessage(topicId, msg);
+   // 先更新 UI
+    state = [...state, msg];
+
+    // 随用随取，用例也从 Ref 拿
+    final sendUseCase = _ref.read(sendUserMessageUsecaseProvider);
+    sendUseCase.execute(topicId, msg);
+
+    // 模拟 Bot 回复
     _sendBotReply(text);
   }
 
@@ -75,6 +76,6 @@ class ChatNotifier extends StateNotifier<List<ChatMessage>> {
       time: DateTime.now(),
       sender: Sender.bot,
     );
-    await _repository.saveMessage(topicId, reply);
+    await _ref.read(chatRepositoryProvider).saveMessage(topicId, reply);
   }
 }
