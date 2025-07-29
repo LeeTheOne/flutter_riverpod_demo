@@ -5,6 +5,7 @@ import '../../data_source/topic_remote_data_source.dart';
 import '../../data_source/topic_local_data_source.dart';
 import '../../domain/usecases/chat_history_usecase.dart';
 import '../../domain/usecases/send_user_message_usecase.dart';
+import '../../domain/usecases/translate_user_msg_usecase.dart';
 import '../../repo/chat_repository.dart';
 import '../../repo/chat_repository_impl.dart';
 import '../../repo/topic_repository_impl.dart';
@@ -61,6 +62,11 @@ final chatHistoryUseCaseProvider = Provider((ref) {
 ///发送消息用例
 final sendUserMessageUsecaseProvider = Provider<SendUserMessageUsecase>((ref) {
   return SendUserMessageUsecase(ref.watch(chatRepositoryProvider));
+});
+
+/// 翻译用户消息用例
+final translateUserMsgUsecaseProvider = Provider<TranslateUserMsgUsecase>((ref) {
+  return TranslateUserMsgUsecase(ref.watch(chatRepositoryProvider));
 });
 
 //***

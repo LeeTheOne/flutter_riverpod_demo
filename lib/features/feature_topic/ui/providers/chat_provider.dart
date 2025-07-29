@@ -4,7 +4,7 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../domain/models/chat_message.dart';
-import 'providers_setup.dart'; // 导出 chatHistoryUseCaseProvider & chatRepositoryProvider
+import 'providers_setup.dart'; // 导出 chatHistoryUseCaseProvider & chatRepositoryProvider & translateUserMsgUsecaseProvider
 
 /// 按 topicId 区分不同会话的 Provider
 final chatProvider = StateNotifierProvider.family<
@@ -21,6 +21,11 @@ class ChatNotifier extends StateNotifier<List<ChatMessage>> {
   late final StreamSubscription<List<ChatMessage>> _sub;
 
   ChatNotifier(this._ref, this.topicId) : super([]) {
+    // 初始化
+    _init();
+  }
+
+  void _init() {
     // 拉历史并缓存到本地
     _loadHistory();
     // 订阅本地消息流，自动更新 UI
@@ -65,17 +70,16 @@ class ChatNotifier extends StateNotifier<List<ChatMessage>> {
     sendUseCase.execute(topicId, msg);
 
     // 模拟 Bot 回复
-    _sendBotReply(text);
+    _sendBotReply(msg);
   }
 
-  Future<void> _sendBotReply(String userText) async {
+  Future<void> _sendBotReply(ChatMessage userMessage) async {
     await Future.delayed(const Duration(seconds: 1));
-    final reply = ChatMessage(
-      id: DateTime.now().toIso8601String(),
-      text: '[翻译] $userText',
-      time: DateTime.now(),
-      sender: Sender.bot,
-    );
+    
+    // 使用翻译用例来生成回复
+    final translateUseCase = _ref.read(translateUserMsgUsecaseProvider);
+    final reply = await translateUseCase.execute(topicId, userMessage);
+    
     await _ref.read(chatRepositoryProvider).saveMessage(topicId, reply);
   }
 }
